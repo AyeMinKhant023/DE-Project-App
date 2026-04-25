@@ -4,7 +4,8 @@ app = Flask(__name__)
 
 @app.route('/')
 def home():
-    return "<h1>Project Alpha: Live!</h1><p>The EC2 is running and Flask is working.</p>"
+    return "<h1>Automated Cloud Security Project</h1>" \
+    "<p>AWS server by Patric is Running!</p>"
 
 if __name__ == '__main__':
     # We use 0.0.0.0 so it listens on the public IP, not just locally
