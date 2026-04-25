@@ -216,3 +216,6 @@ __marimo__/
 
 # Streamlit
 .streamlit/secrets.toml
+
+# macOS system files (Digital Footprints)
+.DS_Store
