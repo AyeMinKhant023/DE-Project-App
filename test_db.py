@@ -3,8 +3,8 @@ import mysql.connector
 # YOUR DATABASE INFO
 db_config = {
     'user': 'admin',
-    'password': 'SuperSecurePas`s123!', # Use your real password
-    'host': 'terraform-20260423055542321500000003.cw5g0yus0fsb.us-east-1.rds.amazonaws.com', # Use your real endpoint
+    'password': 'SuperSecurePas`s123!', # hide password later
+    'host': 'terraform-20260429093317123700000002.cw5g0yus0fsb.us-east-1.rds.amazonaws.com', # (RDS -> Databases -> Connectivity & security -> Endpoints -> Endpoint & port -> copy under Endpoint)
     'database': 'DEProjectDB'
 }
 
@@ -16,4 +16,3 @@ try:
 except Exception as e:
     print("❌ CONNECTION FAILED!")
     print(f"Error: {e}")
-
