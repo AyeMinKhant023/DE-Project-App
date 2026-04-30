@@ -5,7 +5,7 @@ app = Flask(__name__)
 
 db_config = {
     'user': 'admin',
-    'password': 'SuperSecurePass123!', 
+    'password': 'SuperSecurePass123!',
     'host': 'terraform-20260429093317123700000002.cw5g0yus0fsb.us-east-1.rds.amazonaws.com',
     'database': 'DEProjectDB'
 }
@@ -16,12 +16,6 @@ HTML_PAGE = """
 <head><title>Cloud Security Lab</title></head>
 <body style="font-family: sans-serif; margin: 40px; background-color: #f0f2f5;">
     <h2>DE Project: Automated Cloud Security Verification</h2>
-    
-    <div style="margin-bottom: 20px;">
-        <form method="POST" action="/reset">
-            <input type="submit" value="🔄 Reset Database (Fix the Table)" style="background: #007BFF; color: white; border: none; padding: 10px; cursor: pointer;">
-        </form>
-    </div>
 
     <div style="display: flex; gap: 20px;">
         <div style="flex: 1; background: white; padding: 20px; border-top: 5px solid green; border-radius: 8px;">
@@ -32,7 +26,6 @@ HTML_PAGE = """
                 <input type="submit" value="Secure Insert" style="background: green; color: white; border: none; padding: 10px; cursor: pointer;">
             </form>
         </div>
-
         <div style="flex: 1; background: white; padding: 20px; border-top: 5px solid red; border-radius: 8px;">
             <h3 style="color: red;">Category B: Vulnerable Path (f-string)</h3>
             <p><small>Uses String Concatenation. Input can be interpreted as <b>Instructions</b>.</small></p>
@@ -72,57 +65,47 @@ def home():
         cursor.execute("SELECT * FROM students")
         students = cursor.fetchall()
         conn.close()
-    except Exception as e:
+    except Exception:
         table_missing = True
-        
+
     return render_template_string(HTML_PAGE, students=students, table_missing=table_missing)
 
-@app.route('/reset', methods=['POST'])
-def reset():
-    try:
-        conn = mysql.connector.connect(**db_config)
-        cursor = conn.cursor()
-        cursor.execute("DROP TABLE IF EXISTS students")
-        cursor.execute("CREATE TABLE students (id INT AUTO_INCREMENT PRIMARY KEY, name VARCHAR(255))")
-        cursor.execute("INSERT INTO students (name) VALUES ('Normal_Student_1')")
-        conn.commit()
-        conn.close()
-    except Exception as e:
-        print(f"Reset Error: {e}")
-    return redirect('/')
 
+# --- CATEGORY A (SECURE) ---
 @app.route('/secure-add', methods=['POST'])
 def secure():
     val = request.form['name']
     try:
         conn = mysql.connector.connect(**db_config)
         cursor = conn.cursor()
-        cursor.execute("INSERT INTO students (name) VALUES (%s)", (val,)) 
+        cursor.execute("INSERT INTO students (name) VALUES (%s)", (val,))
         conn.commit()
         conn.close()
-    except Exception as e:
-        print(f"Secure Add Error: {e}")
+    except Exception:
+        pass
     return redirect('/')
 
+
+# --- CATEGORY B (VULNERABLE) ---
 @app.route('/vulnerable-add', methods=['POST'])
 def vulnerable():
     val = request.form['name']
     try:
         conn = mysql.connector.connect(**db_config)
         cursor = conn.cursor()
-        
         sql = f"INSERT INTO students (name) VALUES ('{val}')"
-        
-        # Iterating through the cursor ensures all injected commands execute
-        for _ in cursor.execute(sql, multi=True):
-            pass
-            
+        results = cursor.execute(sql, multi=True)
+        for result in results:
+            try:
+                result.fetchall()
+            except Exception:
+                pass
         conn.commit()
         conn.close()
-    except Exception as e:
-        # Prints exact failure reason to your EC2 terminal
-        print(f"Vulnerable Add Error: {e}") 
+    except Exception:
+        pass
     return redirect('/')
+
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000)
