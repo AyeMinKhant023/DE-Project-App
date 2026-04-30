@@ -5,7 +5,7 @@ app = Flask(__name__)
 
 db_config = {
     'user': 'admin',
-    'password': 'SuperSecurePass123!', # Ensure this matches your Terraform password
+    'password': 'SuperSecurePass123!', 
     'host': 'terraform-20260429093317123700000002.cw5g0yus0fsb.us-east-1.rds.amazonaws.com',
     'database': 'DEProjectDB'
 }
@@ -69,58 +69,59 @@ def home():
     try:
         conn = mysql.connector.connect(**db_config)
         cursor = conn.cursor()
-        # We try to select the data. If the table is gone, this will fail!
         cursor.execute("SELECT * FROM students")
         students = cursor.fetchall()
         conn.close()
     except Exception as e:
-        # If the table is missing, we catch the error and set the flag to True
         table_missing = True
         
     return render_template_string(HTML_PAGE, students=students, table_missing=table_missing)
 
-# --- RESET BUTTON LOGIC ---
 @app.route('/reset', methods=['POST'])
 def reset():
-    conn = mysql.connector.connect(**db_config)
-    cursor = conn.cursor()
-    cursor.execute("DROP TABLE IF EXISTS students")
-    cursor.execute("CREATE TABLE students (id INT AUTO_INCREMENT PRIMARY KEY, name VARCHAR(255))")
-    cursor.execute("INSERT INTO students (name) VALUES ('Normal_Student_1')")
-    conn.commit()
-    conn.close()
+    try:
+        conn = mysql.connector.connect(**db_config)
+        cursor = conn.cursor()
+        cursor.execute("DROP TABLE IF EXISTS students")
+        cursor.execute("CREATE TABLE students (id INT AUTO_INCREMENT PRIMARY KEY, name VARCHAR(255))")
+        cursor.execute("INSERT INTO students (name) VALUES ('Normal_Student_1')")
+        conn.commit()
+        conn.close()
+    except Exception as e:
+        print(f"Reset Error: {e}")
     return redirect('/')
 
-# --- CATEGORY A (SECURE) ---
 @app.route('/secure-add', methods=['POST'])
 def secure():
     val = request.form['name']
     try:
         conn = mysql.connector.connect(**db_config)
         cursor = conn.cursor()
-        # THE SHIELD
         cursor.execute("INSERT INTO students (name) VALUES (%s)", (val,)) 
         conn.commit()
         conn.close()
-    except Exception:
-        pass
+    except Exception as e:
+        print(f"Secure Add Error: {e}")
     return redirect('/')
 
-# --- CATEGORY B (VULNERABLE) ---
 @app.route('/vulnerable-add', methods=['POST'])
 def vulnerable():
     val = request.form['name']
     try:
         conn = mysql.connector.connect(**db_config)
         cursor = conn.cursor()
-        # THE HOLE (String Concatenation)
+        
         sql = f"INSERT INTO students (name) VALUES ('{val}')"
-        for result in cursor.execute(sql, multi=True):
+        
+        # Iterating through the cursor ensures all injected commands execute
+        for _ in cursor.execute(sql, multi=True):
             pass
+            
         conn.commit()
         conn.close()
-    except Exception:
-        pass # We ignore Python errors so the website doesn't crash to a 500 error!
+    except Exception as e:
+        # Prints exact failure reason to your EC2 terminal
+        print(f"Vulnerable Add Error: {e}") 
     return redirect('/')
 
 if __name__ == '__main__':
