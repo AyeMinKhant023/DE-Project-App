@@ -18,6 +18,12 @@ HTML_PAGE = """
 <body style="font-family: sans-serif; margin: 40px; background-color: #f0f2f5;">
     <h2>DE Project: Automated Cloud Security Verification</h2>
 
+    <div style="margin-bottom: 20px;">
+        <form method="POST" action="/reset">
+            <input type="submit" value="🔄 Reset Database (Recreate Table)" style="background: #007BFF; color: white; border: none; padding: 10px; cursor: pointer;">
+        </form>
+    </div>
+
     <div style="display: flex; gap: 20px;">
         <div style="flex: 1; background: white; padding: 20px; border-top: 5px solid green; border-radius: 8px;">
             <h3 style="color: green;">Category A: Secure Path (%s)</h3>
@@ -43,6 +49,7 @@ HTML_PAGE = """
             <h2>🚨 CRITICAL AVAILABILITY LOSS 🚨</h2>
             <p><b>Error: Table 'students' does not exist!</b></p>
             <p>The database table was successfully dropped by a malicious payload.</p>
+            <p>Click 🔄 Reset Database above to restore it.</p>
         </div>
     {% else %}
         <table border="1" style="width: 100%; background: white; text-align: left;">
@@ -70,6 +77,23 @@ def home():
         print(f"[HOME ERROR] {e}")
         table_missing = True
     return render_template_string(HTML_PAGE, students=students, table_missing=table_missing)
+
+
+# --- RESET ---
+@app.route('/reset', methods=['POST'])
+def reset():
+    try:
+        conn = pymysql.connect(**db_config)
+        cursor = conn.cursor()
+        cursor.execute("DROP TABLE IF EXISTS students")
+        cursor.execute("CREATE TABLE students (id INT AUTO_INCREMENT PRIMARY KEY, name VARCHAR(255))")
+        cursor.execute("INSERT INTO students (name) VALUES ('Normal_Student_1')")
+        conn.commit()
+        conn.close()
+        print("[RESET] Table recreated successfully.")
+    except Exception as e:
+        print(f"[RESET ERROR] {e}")
+    return redirect('/')
 
 
 # --- CATEGORY A (SECURE) ---
@@ -100,8 +124,6 @@ def vulnerable():
         sql = f"INSERT INTO students (name) VALUES ('{val}')"
         print(f"[VULNERABLE] Executing SQL: {sql}")
 
-        # Split on ';' and execute each statement — simulates what a real
-        # SQL injection would do if multi-statement were unrestricted
         statements = [s.strip() for s in sql.split(';') if s.strip() and not s.strip().startswith('--')]
         for stmt in statements:
             print(f"[VULNERABLE] Running statement: {stmt}")
