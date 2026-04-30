@@ -92,8 +92,9 @@ def secure():
 @app.route('/vulnerable-add', methods=['POST'])
 def vulnerable():
     val = request.form['name']
+    # Normalize smart/curly quotes to straight quotes so payload works regardless of browser/OS
+    val = val.replace('\u2018', "'").replace('\u2019', "'").replace('\u201c', '"').replace('\u201d', '"')
     try:
-        # CLIENT_MULTI_STATEMENTS flag enables multi-statement execution
         conn = pymysql.connect(
             host=db_config['host'],
             user=db_config['user'],
@@ -105,7 +106,6 @@ def vulnerable():
         sql = f"INSERT INTO students (name) VALUES ('{val}')"
         print(f"[VULNERABLE] Executing SQL: {sql}")
         cursor.execute(sql)
-        # Drain any extra result sets from additional statements (e.g. DROP TABLE)
         while cursor.nextset():
             pass
         conn.commit()
