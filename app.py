@@ -92,21 +92,7 @@ def secure():
 @app.route('/vulnerable-add', methods=['POST'])
 def vulnerable():
     val = request.form['name']
-    
-    # Debug: print exact unicode codepoints to see what's coming in
     print(f"[VULNERABLE] Raw input codepoints: {[hex(ord(c)) for c in val]}")
-    
-    # Normalize ALL known quote variants to straight single quote
-    quote_variants = [
-        '\u2018', '\u2019',  # ' '
-        '\u201a', '\u201b',  # ‚ ‛
-        '\u2032', '\u2035',  # ′ ‵
-        '\u0060', '\u00b4',  # ` ´
-        '\uff07',            # ＇ fullwidth
-        '\u02bc', '\u02b9',  # ʼ ʹ
-    ]
-    for q in quote_variants:
-        val = val.replace(q, "'")
 
     try:
         conn = pymysql.connect(
@@ -117,7 +103,9 @@ def vulnerable():
             client_flag=pymysql.constants.CLIENT.MULTI_STATEMENTS
         )
         cursor = conn.cursor()
-        sql = f"INSERT INTO students (name) VALUES ('{val}')"
+        # Vulnerable: user input placed directly into SQL string
+        # Intentionally no closing quote — the payload's -- comment handles it
+        sql = f"INSERT INTO students (name) VALUES ('{val}"
         print(f"[VULNERABLE] Executing SQL: {sql}")
         cursor.execute(sql)
         while cursor.nextset():
