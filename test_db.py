@@ -25,6 +25,15 @@ try:
     conn.commit()
     print(f"✅ INTEGRITY TEST: Successfully inserted '{student_name}' using Parameterized Query.")
 
+    # 3. VERIFICATION: Showing the current state of the database to confirm the insert worked
+    cursor.execute("SELECT * FROM students")
+    rows = cursor.fetchall()
+    
+    print("\n--- Current Database State ---")
+    for row in rows:
+        print(f"ID: {row[0]} | Name: {row[1]}")
+    print("------------------------------")
+
     cursor.close()
     conn.close()
 except Exception as e:
