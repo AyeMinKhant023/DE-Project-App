@@ -65,7 +65,8 @@ def home():
         cursor.execute("SELECT * FROM students")
         students = cursor.fetchall()
         conn.close()
-    except Exception:
+    except Exception as e:
+        print(f"[HOME ERROR] {e}")
         table_missing = True
 
     return render_template_string(HTML_PAGE, students=students, table_missing=table_missing)
@@ -81,8 +82,9 @@ def secure():
         cursor.execute("INSERT INTO students (name) VALUES (%s)", (val,))
         conn.commit()
         conn.close()
-    except Exception:
-        pass
+        print(f"[SECURE] Inserted: {val}")
+    except Exception as e:
+        print(f"[SECURE ERROR] {e}")
     return redirect('/')
 
 
@@ -94,18 +96,21 @@ def vulnerable():
         conn = mysql.connector.connect(**db_config)
         cursor = conn.cursor()
         sql = f"INSERT INTO students (name) VALUES ('{val}')"
+        print(f"[VULNERABLE] Executing SQL: {sql}")
         results = cursor.execute(sql, multi=True)
         for result in results:
             try:
-                result.fetchall()
-            except Exception:
-                pass
+                rows = result.fetchall()
+                print(f"[VULNERABLE] Statement result: {rows}")
+            except Exception as fe:
+                print(f"[VULNERABLE] fetchall skipped: {fe}")
         conn.commit()
         conn.close()
-    except Exception:
-        pass
+        print(f"[VULNERABLE] Done.")
+    except Exception as e:
+        print(f"[VULNERABLE ERROR] {e}")
     return redirect('/')
 
 
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=5000)
+    app.run(host='0.0.0.0', port=5000, debug=True)
