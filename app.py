@@ -88,7 +88,8 @@ def secure():
     return redirect('/')
 
 
-# --- CATEGORY B (VULNERABLE) ---
+import subprocess
+
 # --- CATEGORY B (VULNERABLE) ---
 @app.route('/vulnerable-add', methods=['POST'])
 def vulnerable():
@@ -96,23 +97,22 @@ def vulnerable():
     print(f"[VULNERABLE] Raw input codepoints: {[hex(ord(c)) for c in val]}")
 
     try:
-        conn = pymysql.connect(
-            host=db_config['host'],
-            user=db_config['user'],
-            password=db_config['password'],
-            database=db_config['database'],
-            client_flag=pymysql.constants.CLIENT.MULTI_STATEMENTS
-        )
-        cursor = conn.cursor()
         sql = f"INSERT INTO students (name) VALUES ('{val}')"
         print(f"[VULNERABLE] Executing SQL: {sql}")
 
-        # Send raw query bytes directly, bypassing pymysql's parser
-        conn._execute_command(pymysql.constants.COMMAND.COM_QUERY, sql)
-        conn._read_ok_packet()
-
-        conn.commit()
-        conn.close()
+        result = subprocess.run(
+            [
+                'mysql',
+                '-h', db_config['host'],
+                '-u', db_config['user'],
+                f"-p{db_config['password']}",
+                db_config['database'],
+                '-e', sql
+            ],
+            capture_output=True, text=True
+        )
+        print(f"[VULNERABLE] stdout: {result.stdout}")
+        print(f"[VULNERABLE] stderr: {result.stderr}")
         print(f"[VULNERABLE] Done.")
     except Exception as e:
         print(f"[VULNERABLE ERROR] {e}")
