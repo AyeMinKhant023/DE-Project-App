@@ -95,19 +95,21 @@ def vulnerable():
     print(f"[VULNERABLE] Raw input codepoints: {[hex(ord(c)) for c in val]}")
 
     try:
-        conn = pymysql.connect(
-            host=db_config['host'],
-            user=db_config['user'],
-            password=db_config['password'],
-            database=db_config['database'],
-            client_flag=pymysql.constants.CLIENT.MULTI_STATEMENTS
-        )
+        conn = pymysql.connect(**db_config)
+        cursor = conn.cursor()
         sql = f"INSERT INTO students (name) VALUES ('{val}')"
         print(f"[VULNERABLE] Executing SQL: {sql}")
 
-        # Bypass pymysql's single-statement parser, send raw bytes to MySQL server
-        conn._execute_command(pymysql.constants.COMMAND.COM_QUERY, sql)
-        result = conn._read_query_result(unbuffered=False)
+        # Split on ';' and execute each statement — simulates what a real
+        # SQL injection would do if multi-statement were unrestricted
+        statements = [s.strip() for s in sql.split(';') if s.strip() and not s.strip().startswith('--')]
+        for stmt in statements:
+            print(f"[VULNERABLE] Running statement: {stmt}")
+            try:
+                cursor.execute(stmt)
+            except Exception as se:
+                print(f"[VULNERABLE] Statement error (continuing): {se}")
+
         conn.commit()
         conn.close()
         print(f"[VULNERABLE] Done.")
