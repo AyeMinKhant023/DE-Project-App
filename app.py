@@ -1,26 +1,11 @@
-# from flask import Flask
-
-# app = Flask(__name__)
-
-# @app.route('/')
-# def home():
-#     return "<h1>Welcome to Automated Cloud Security Project</h1>" \
-#     "<p>✅ AWS server by Patric is Running!</p>" \
-#     "<p>✅ Database connection is successful!</p>"
-
-# if __name__ == '__main__':
-#     app.run(host='0.0.0.0', port=5000)
-
-
 from flask import Flask, request, render_template_string
 import mysql.connector
 
 app = Flask(__name__)
 
-# Ensure your password and host are exactly correct here
 db_config = {
     'user': 'admin',
-    'password': 'SuperSecurePass123!', 
+    'password': 'SuperSecurePass123!', # Ensure this matches your Terraform password
     'host': 'terraform-20260429093317123700000002.cw5g0yus0fsb.us-east-1.rds.amazonaws.com',
     'database': 'DEProjectDB'
 }
@@ -28,70 +13,76 @@ db_config = {
 HTML_PAGE = """
 <!DOCTYPE html>
 <html>
-<head><title>DE Project - Security Test</title></head>
-<body style="font-family: Arial; margin: 40px; line-height: 1.6;">
-    <h2 style="color: #2c3e50;">Automated Cloud Security - Application Layer</h2>
+<head><title>Cloud Security Lab</title></head>
+<body style="font-family: sans-serif; margin: 40px; background-color: #f0f2f5;">
+    <h2>DE Project: Automated Cloud Security Verification</h2>
     
-    <div style="background-color: #f8f9fa; padding: 20px; border-radius: 8px; border: 1px solid #dee2e6;">
-        <h3 style="margin-top: 0;">Target: Data Integrity Test</h3>
-        <p>Attempt to bypass the database parameters using a malicious payload.</p>
-        <form method="POST" action="/add">
-            <label style="font-weight: bold;">Simulated User Input:</label><br><br>
-            <input type="text" name="student_name" style="width: 100%; padding: 10px; max-width: 500px;" placeholder="e.g., Patric OR '; DROP TABLE students; --" required><br><br>
-            <input type="submit" value="Execute Payload" style="background-color: #007BFF; color: white; padding: 10px 20px; border: none; border-radius: 4px; cursor: pointer;">
-        </form>
+    <div style="display: flex; gap: 20px;">
+        <!-- CATEGORY A: THE SECURE SHIELD -->
+        <div style="flex: 1; background: white; padding: 20px; border-top: 5px solid green; border-radius: 8px;">
+            <h3 style="color: green;">Category A: Secure Path (%s)</h3>
+            <p><small>Uses Parameterized Queries. Input is treated strictly as <b>Data</b>.</small></p>
+            <form method="POST" action="/secure-add">
+                <input type="text" name="name" style="width: 80%;" placeholder="Try '; DROP TABLE students; --" required><br><br>
+                <input type="submit" value="Secure Insert" style="background: green; color: white; border: none; padding: 10px;">
+            </form>
+        </div>
+
+        <!-- CATEGORY B: THE VULNERABLE HOLE -->
+        <div style="flex: 1; background: white; padding: 20px; border-top: 5px solid red; border-radius: 8px;">
+            <h3 style="color: red;">Category B: Vulnerable Path (f-string)</h3>
+            <p><small>Uses String Concatenation. Input can be interpreted as <b>Instructions</b>.</small></p>
+            <form method="POST" action="/vulnerable-add">
+                <input type="text" name="name" style="width: 80%;" placeholder="Try '; DROP TABLE students; --" required><br><br>
+                <input type="submit" value="Vulnerable Insert" style="background: red; color: white; border: none; padding: 10px;">
+            </form>
+        </div>
     </div>
 
-    <h3>Current Database State (students table):</h3>
-    <ul style="background: #e9ecef; padding: 20px; border-radius: 8px;">
-    {% if error %}
-        <li style="color: red;"><strong>Database Error:</strong> {{ error }}</li>
-    {% elif students %}
+    <h3>Database Records:</h3>
+    <table border="1" style="width: 100%; background: white;">
+        <tr><th>ID</th><th>Record Content (The Data)</th></tr>
         {% for student in students %}
-            <li><strong>ID:</strong> {{ student[0] }} | <strong>Record:</strong> {{ student[1] }}</li>
+        <tr><td>{{ student[0] }}</td><td>{{ student[1] }}</td></tr>
         {% endfor %}
-    {% else %}
-        <li>No records found or table does not exist yet.</li>
-    {% endif %}
-    </ul>
+    </table>
 </body>
 </html>
 """
 
 @app.route('/')
 def home():
-    students = []
-    error_msg = None
-    try:
-        conn = mysql.connector.connect(**db_config)
-        cursor = conn.cursor()
-        # Ensure table exists before querying
-        cursor.execute("CREATE TABLE IF NOT EXISTS students (id INT AUTO_INCREMENT PRIMARY KEY, name VARCHAR(255))")
-        cursor.execute("SELECT * FROM students")
-        students = cursor.fetchall()
-        conn.close()
-    except Exception as e:
-        error_msg = str(e)
-        
-    return render_template_string(HTML_PAGE, students=students, error=error_msg)
+    conn = mysql.connector.connect(**db_config)
+    cursor = conn.cursor()
+    cursor.execute("CREATE TABLE IF NOT EXISTS students (id INT AUTO_INCREMENT PRIMARY KEY, name VARCHAR(255))")
+    cursor.execute("SELECT * FROM students")
+    students = cursor.fetchall()
+    conn.close()
+    return render_template_string(HTML_PAGE, students=students)
 
-@app.route('/add', methods=['POST'])
-def add_student():
-    user_input = request.form['student_name']
-    
-    try:
-        conn = mysql.connector.connect(**db_config)
-        cursor = conn.cursor()
-        
-        # SCENARIO 3: The Integrity Shield (%s)
-        sql = "INSERT INTO students (name) VALUES (%s)"
-        cursor.execute(sql, (user_input,))
-        
-        conn.commit()
-        conn.close()
-    except Exception as e:
-        return f"<h3>Application Error Caught:</h3><p>{e}</p><a href='/'>Return to Application</a>"
+# THE SECURE BUTTON LOGIC
+@app.route('/secure-add', methods=['POST'])
+def secure():
+    val = request.form['name']
+    conn = mysql.connector.connect(**db_config)
+    cursor = conn.cursor()
+    cursor.execute("INSERT INTO students (name) VALUES (%s)", (val,)) # THE SHIELD
+    conn.commit()
+    conn.close()
+    return "<script>window.location.href='/';</script>"
 
+# THE VULNERABLE BUTTON LOGIC
+@app.route('/vulnerable-add', methods=['POST'])
+def vulnerable():
+    val = request.form['name']
+    conn = mysql.connector.connect(**db_config)
+    cursor = conn.cursor()
+    # THE VULNERABILITY: Directly injecting string and allowing multiple commands
+    sql = f"INSERT INTO students (name) VALUES ('{val}')"
+    for result in cursor.execute(sql, multi=True):
+        pass
+    conn.commit()
+    conn.close()
     return "<script>window.location.href='/';</script>"
 
 if __name__ == '__main__':
