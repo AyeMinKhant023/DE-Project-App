@@ -1,5 +1,5 @@
 from flask import Flask, request, render_template_string, redirect
-import mysql.connector
+import pymysql
 
 app = Flask(__name__)
 
@@ -60,7 +60,7 @@ def home():
     students = []
     table_missing = False
     try:
-        conn = mysql.connector.connect(**db_config)
+        conn = pymysql.connect(**db_config)
         cursor = conn.cursor()
         cursor.execute("SELECT * FROM students")
         students = cursor.fetchall()
@@ -77,7 +77,7 @@ def home():
 def secure():
     val = request.form['name']
     try:
-        conn = mysql.connector.connect(**db_config)
+        conn = pymysql.connect(**db_config)
         cursor = conn.cursor()
         cursor.execute("INSERT INTO students (name) VALUES (%s)", (val,))
         conn.commit()
@@ -93,17 +93,21 @@ def secure():
 def vulnerable():
     val = request.form['name']
     try:
-        conn = mysql.connector.connect(**db_config)
+        # CLIENT_MULTI_STATEMENTS flag enables multi-statement execution
+        conn = pymysql.connect(
+            host=db_config['host'],
+            user=db_config['user'],
+            password=db_config['password'],
+            database=db_config['database'],
+            client_flag=pymysql.constants.CLIENT.MULTI_STATEMENTS
+        )
         cursor = conn.cursor()
         sql = f"INSERT INTO students (name) VALUES ('{val}')"
         print(f"[VULNERABLE] Executing SQL: {sql}")
-        results = cursor.execute(sql, multi=True)
-        for result in results:
-            try:
-                rows = result.fetchall()
-                print(f"[VULNERABLE] Statement result: {rows}")
-            except Exception as fe:
-                print(f"[VULNERABLE] fetchall skipped: {fe}")
+        cursor.execute(sql)
+        # Drain any extra result sets from additional statements (e.g. DROP TABLE)
+        while cursor.nextset():
+            pass
         conn.commit()
         conn.close()
         print(f"[VULNERABLE] Done.")
