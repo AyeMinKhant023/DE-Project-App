@@ -92,8 +92,22 @@ def secure():
 @app.route('/vulnerable-add', methods=['POST'])
 def vulnerable():
     val = request.form['name']
-    # Normalize smart/curly quotes to straight quotes so payload works regardless of browser/OS
-    val = val.replace('\u2018', "'").replace('\u2019', "'").replace('\u201c', '"').replace('\u201d', '"')
+    
+    # Debug: print exact unicode codepoints to see what's coming in
+    print(f"[VULNERABLE] Raw input codepoints: {[hex(ord(c)) for c in val]}")
+    
+    # Normalize ALL known quote variants to straight single quote
+    quote_variants = [
+        '\u2018', '\u2019',  # ' '
+        '\u201a', '\u201b',  # ‚ ‛
+        '\u2032', '\u2035',  # ′ ‵
+        '\u0060', '\u00b4',  # ` ´
+        '\uff07',            # ＇ fullwidth
+        '\u02bc', '\u02b9',  # ʼ ʹ
+    ]
+    for q in quote_variants:
+        val = val.replace(q, "'")
+
     try:
         conn = pymysql.connect(
             host=db_config['host'],
