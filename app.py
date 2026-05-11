@@ -7,7 +7,7 @@ app = Flask(__name__)
 db_config = {
     'user': 'admin',
     'password': 'SuperSecurePass123!',
-    'host': 'terraform-20260429093317123700000002.cw5g0yus0fsb.us-east-1.rds.amazonaws.com',
+    'host': 'terraform-20260511044108602500000002.cw5g0yus0fsb.us-east-1.rds.amazonaws.com',
     'database': 'DEProjectDB'
 }
 
