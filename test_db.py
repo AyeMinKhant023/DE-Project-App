@@ -4,7 +4,7 @@ import mysql.connector
 db_config = {
     'user': 'admin',
     'password': 'SuperSecurePass123!', # hide password later
-    'host': 'terraform-20260429093317123700000002.cw5g0yus0fsb.us-east-1.rds.amazonaws.com', # (RDS -> Databases -> Connectivity & security -> Endpoints -> Endpoint & port -> copy under Endpoint)
+    'host': 'terraform-20260511044108602500000002.cw5g0yus0fsb.us-east-1.rds.amazonaws.com', # (RDS -> Databases -> Connectivity & security -> Endpoints -> Endpoint & port -> copy under Endpoint)
     'database': 'DEProjectDB'
 }
 
