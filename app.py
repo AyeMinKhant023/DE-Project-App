@@ -378,7 +378,7 @@ HTML_TEMPLATE = """
             </div>
             <div class="author-meta">
                 Course: <strong>977-302 Digital Engineering Project II</strong><br>
-                Engineer: <strong>Aye Min Khant</strong> (6630613023)
+                Student: <strong>Aye Min Khant (6630613023)</strong>
             </div>
         </header>
 
