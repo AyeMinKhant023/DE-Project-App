@@ -170,10 +170,10 @@ HTML_TEMPLATE = """
             100% { transform: scale(0.95); opacity: 0.8; }
         }
 
-        /* 4-Tier Security Cards */
+        /* 3-Tier Security Cards */
         .tier-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+            grid-template-columns: repeat(auto-fit, minmax(310px, 1fr));
             gap: 20px;
             margin-bottom: 36px;
         }
@@ -393,42 +393,33 @@ HTML_TEMPLATE = """
             </div>
         </div>
 
-        <!-- 4-Tier Security Grid -->
+        <!-- 3-Tier Security Architecture (Aligned with Reference Architecture) -->
         <div class="tier-grid">
             <div class="tier-card">
                 <div class="tier-header">
-                    <span class="tier-num">Tier 1 • Edge</span>
+                    <span class="tier-num">Tier 1 • Public Ingress</span>
                     <span class="tier-status">WAF ACTIVE</span>
                 </div>
-                <div class="tier-title">AWS WAF v2</div>
-                <div class="tier-desc">Layer 7 inspection: OWASP Top 10, SQLi heuristics, and 100 req/5min rate limiting.</div>
+                <div class="tier-title">ALB & AWS WAF v2</div>
+                <div class="tier-desc">Public entry across AZ-1a/1b terminating port 80. Protected by AWS WAF v2 WebACL for Layer 7 inspection (OWASP Top 10, SQLi, and 100 req/5min rate limiting).</div>
             </div>
 
             <div class="tier-card">
                 <div class="tier-header">
-                    <span class="tier-num">Tier 2 • Ingress</span>
-                    <span class="tier-status">MULTI-AZ</span>
-                </div>
-                <div class="tier-title">Application Load Balancer</div>
-                <div class="tier-desc">Public entry across AZ-1a and AZ-1b. Terminates port 80 and routes to port 5000.</div>
-            </div>
-
-            <div class="tier-card">
-                <div class="tier-header">
-                    <span class="tier-num">Tier 3 • Compute</span>
+                    <span class="tier-num">Tier 2 • Private App</span>
                     <span class="tier-status">ISOLATED</span>
                 </div>
-                <div class="tier-title">Auto Scaling Group</div>
-                <div class="tier-desc">Zero public IPs. Resides in private app subnets with systemd self-healing daemons.</div>
+                <div class="tier-title">Auto Scaling Compute</div>
+                <div class="tier-desc">Zero public IPs. Multi-AZ private subnets executing self-healing Flask daemons managed by systemd (2 to 4 worker nodes).</div>
             </div>
 
             <div class="tier-card">
                 <div class="tier-header">
-                    <span class="tier-num">Tier 4 • Storage</span>
+                    <span class="tier-num">Tier 3 • Persistence</span>
                     <span class="tier-status">KMS ENCRYPTED</span>
                 </div>
                 <div class="tier-title">Air-Gapped RDS MySQL</div>
-                <div class="tier-desc">Local VPC routing only. Storage encrypted at rest via Customer Managed Key (CMK).</div>
+                <div class="tier-desc">Dedicated DB subnets with zero internet route. Hardened MySQL storage encrypted at rest via AWS KMS Customer Managed Key (CMK).</div>
             </div>
         </div>
 
